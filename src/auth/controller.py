@@ -9,7 +9,7 @@ from . import service
 
 router = APIRouter(
     prefix='/auth',
-    tags=['auth']
+    tags=['Auth']
 )
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
