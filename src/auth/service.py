@@ -22,6 +22,9 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
+
+""" Password: Authenticate user """
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return bcrypt_context.verify(plain_password, hashed_password)
 
@@ -36,6 +39,8 @@ def authenticate_user(email:str, password:str, db:Session) -> User | bool:
         return False
     return user
 
+
+""" Access Token"""
 
 def create_access_token(email:str, user_id: UUID, expires_delta: timedelta) -> str:
     encode = {
@@ -54,3 +59,38 @@ def verify_token(token: str) -> schemas.TokenData:
     except PyJWTError as e:
         logging.warning(f'Token verification failed: {str(e)}')
         raise AuthenticationError()
+    
+
+"""" Fetch Current User using access token"""
+
+def register_user(db: Session, register_user_request: schemas.RegisterUserRequest) -> None:
+    try:
+        create_user_model = User(
+            id = uuid4(),
+            email=register_user_request.email,
+            first_name=register_user_request.first_name,
+            last_name=register_user_request.last_name,
+            get_password_hash=get_password_hash(register_user_request.password)
+        )
+        db.add(create_user_model)
+        db.commit()
+
+    except Exception as e:
+        logging.error()
+
+
+def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]) -> schemas.TokenData:
+    return verify_token(token)
+
+CurrentUser = Annotated[schemas.TokenData, Depends(get_current_user)]
+
+
+""" Login User using access token schemas"""
+
+def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session) -> schemas.Token:
+    user = authenticate_user(form_data.username, form_data.password, db)
+    if not user:
+        raise AuthenticationError()
+    
+    token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return schemas.Token(access_token=token, token_type='bearer')
