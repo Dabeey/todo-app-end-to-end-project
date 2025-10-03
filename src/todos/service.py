@@ -24,3 +24,44 @@ def create_todo(current_user: TokenData, db: Session,  todo: schemas.TodoCreate)
         raise TodoCreationError(str(e))
 
 
+def get_todos(current_user: TokenData, db: Session) -> list[schemas.TokenResponse]:
+    todos = db.query(Todo).filter(Todo.user_id == current_user.get_uuid()).all()
+    logging.info(f'Retrieved {len(todos)} todos for user: {current_user.get_uuid()}')
+
+
+def get_todo_by_id(current_user: TokenData, db: Session, todo_id: UUID) -> Todo:
+    todo = db.query(Todo).filter(Todo.id == todo_id).filter(Todo.user_id == current_user.get_uuid).first()
+    if not todo:
+        logging.warning(f'Todo {todo_id} not found for user {current_user.get_uuid()}')
+        raise TodoNotFoundError(todo_id)
+    logging.info(f'Retrieved todo {todo_id} for user: {current_user.get_uuid()}')
+    return todo
+
+
+def update_todo(current_user: TokenData, db: Session, todo_id: UUID, todo_update: schemas.TodoCreate) -> Todo:
+    todo_data = todo_update.schemas.model_dump(exclude_unset=True)
+    db.query(Todo).filter(Todo.id == todo_id).filter(Todo.user_id == current_user.get_uuid).first()
+    db.commit()
+    logging.info(f'Successfully updated todo {todo_id} for user: {current_user.get_uuid()}')
+    return get_todo_by_id(current_user, db, todo_id)
+
+
+def complete_todo(current_user: TokenData, db: Session, todo_id: UUID) -> Todo:
+    todo = get_todo_by_id(current_user, db, todo_id)
+    if todo.is_completed:
+        logging.debug(f'Todo {todo_id} is already complete')
+        return todo
+
+    todo.is_completed = True
+    todo.completed_at = datetime.now(timezone.utc)
+    db.commit()
+    db.refresh(todo)
+    logging.info(f'Todo {todo_id} marked as complete by user {current_user.get_uuid()}')
+    return todo
+
+
+def delete_todo(current_user: TokenData, db: Session, todo_id: UUID) -> None:
+    todo = get_todo_by_id(current_user, db, todo_id)
+    db.delete(todo)
+    db.commit()
+    logging.info(f'Todo {todo_id} deleted by user {current_user.get_uuid()}')
