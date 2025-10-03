@@ -1,0 +1,2 @@
+class TodoNotFoundError():
+    pass
