@@ -5,7 +5,7 @@ from uuid import UUID
 from src.entities.todo import Priority
 
 
-class TodoBase():
+class TodoBase(BaseModel):
     description: str
     due_date: Optional[datetime] = None
     priority: Priority = Priority.Medium

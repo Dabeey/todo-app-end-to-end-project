@@ -24,7 +24,7 @@ def create_todo(current_user: TokenData, db: Session,  todo: schemas.TodoCreate)
         raise TodoCreationError(str(e))
 
 
-def get_todos(current_user: TokenData, db: Session) -> list[schemas.TokenResponse]:
+def get_todos(current_user: TokenData, db: Session) -> list[schemas.TodoResponse]:
     todos = db.query(Todo).filter(Todo.user_id == current_user.get_uuid()).all()
     logging.info(f'Retrieved {len(todos)} todos for user: {current_user.get_uuid()}')
 
