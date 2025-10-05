@@ -76,7 +76,7 @@ def register_user(db: Session, register_user_request: schemas.RegisterUserReques
         db.commit()
 
     except Exception as e:
-        logging.error()
+        logging.error("Something went wrong")
 
 
 def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]) -> schemas.TokenData:
