@@ -1,14 +1,10 @@
 import logging
-import os
 from enum import Enum
 
-LOG_DIR = "logs"
-os.makedirs(LOG_DIR, exist_ok=True)
-LOG_FILE = os.path.join(LOG_DIR, "app.log")
 
-LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-LOG_FORMAT_DEBUG = "%(asctime)s | %(levelname)s | %(name)s | %(funcName)s | line:%(lineno)d | %(message)s"
-
+# -------------------------------------------------------------------
+# Log level definitions
+# -------------------------------------------------------------------
 class LogLevels(str, Enum):
     INFO = "INFO"
     WARN = "WARN"
@@ -16,29 +12,44 @@ class LogLevels(str, Enum):
     DEBUG = "DEBUG"
 
 
-def configure_logging(log_level: str = LogLevels.ERROR.value):
-    """Configures global logging for the app."""
+# -------------------------------------------------------------------
+# Default format for detailed debugging
+# -------------------------------------------------------------------
+LOG_FORMAT_DEBUG = "%(levelname)s: %(message)s [%(pathname)s:%(funcName)s:%(lineno)d]"
+
+
+# -------------------------------------------------------------------
+# Configure the logging system
+# -------------------------------------------------------------------
+def configure_logging(log_level: str | LogLevels = LogLevels.ERROR) -> None:
+    """
+    Configure application logging.
+
+    Args:
+        log_level (str | LogLevels): Desired logging level. Defaults to ERROR.
+    """
+
+    # Convert enum to string if necessary
+    if isinstance(log_level, LogLevels):
+        log_level = log_level.value
+
+    # Normalize case
     log_level = str(log_level).upper()
 
-    if log_level not in LogLevels._value2member_map_:
-        log_level = LogLevels.ERROR.value
+    # Map string to actual logging constant
+    log_level_map = {
+        "DEBUG": logging.DEBUG,
+        "INFO": logging.INFO,
+        "WARN": logging.WARN,
+        "ERROR": logging.ERROR,
+    }
 
-    # Prevent duplicate handlers if reloaded
-    if logging.getLogger().hasHandlers():
-        logging.getLogger().handlers.clear()
+    level = log_level_map.get(log_level, logging.ERROR)
 
-    # Choose format
-    log_format = LOG_FORMAT_DEBUG if log_level == LogLevels.DEBUG.value else LOG_FORMAT
+    # Apply configuration
+    if level == logging.DEBUG:
+        logging.basicConfig(level=level, format=LOG_FORMAT_DEBUG)
+    else:
+        logging.basicConfig(level=level)
 
-    # Configure logging
-    logging.basicConfig(
-        level=log_level,
-        format=log_format,
-        handlers=[
-            logging.StreamHandler(),  # Console
-            logging.FileHandler(LOG_FILE)  # File
-        ]
-    )
-
-    logging.info(f"Logging configured at level: {log_level}")
-    return logging.getLogger(__name__)
+    logging.info(f"Logging initialized with level: {log_level}")

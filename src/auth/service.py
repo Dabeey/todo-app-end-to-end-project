@@ -96,7 +96,7 @@ def register_user(db, register_user_request: schemas.RegisterUserRequest):
 
     except IntegrityError as e:
         db.rollback()
-        logging.error(f"IntegrityError: {e}")
+        logging.error(f"IntegrityError: ❌ Email already registered - {e}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already exists."

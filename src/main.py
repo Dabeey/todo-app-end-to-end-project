@@ -5,7 +5,7 @@ from .entities.user import User
 from .api import register_routes
 from .logger_config import configure_logging, LogLevels
 
-configure_logging(LogLevels.info)
+configure_logging(LogLevels.INFO)
 
 app = FastAPI()
 
