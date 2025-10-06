@@ -12,7 +12,7 @@ class TodoBase(BaseModel):
 
 
 class TodoCreate(TodoBase):
-    pass
+    description: str
 
 
 class TodoResponse(TodoBase):

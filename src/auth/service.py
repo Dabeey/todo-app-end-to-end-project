@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-ALGORITHM = os.getenv('ALGORITHM')
+ALGORITHM = os.getenv('ALGORITHM') or 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
@@ -56,7 +56,7 @@ def create_access_token(email:str, user_id: UUID, expires_delta: timedelta) -> s
 
 def verify_token(token: str) -> schemas.TokenData:
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get('id')
         return schemas.TokenData(user_id=user_id)
     except PyJWTError as e:

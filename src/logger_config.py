@@ -52,4 +52,7 @@ def configure_logging(log_level: str | LogLevels = LogLevels.ERROR) -> None:
     else:
         logging.basicConfig(level=level)
 
+    logging.getLogger("uvicorn").setLevel(level)
+    logging.getLogger("uvicorn.error").setLevel(level)
+    logging.getLogger("uvicorn.access").setLevel(level)
     logging.info(f"Logging initialized with level: {log_level}")

@@ -28,7 +28,7 @@ def change_password(db: Session, user_id: UUID, password_change: schemas.Passwor
         # verify new password match
         if password_change.new_password != password_change.new_password_confirm:
             logging.warning(f'Password mismatch during change attempt')
-            raise PasswordMismatchError
+            raise PasswordMismatchError()
         
         # update password
         user.password_hash = get_password_hash(password_change.new_password)
