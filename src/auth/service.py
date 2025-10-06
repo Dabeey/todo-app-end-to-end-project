@@ -13,7 +13,7 @@ from ..exceptions import AuthenticationError
 import logging
 import os
 from ..database.core import get_db
-
+from sqlalchemy.orm.util
 
 
 SECRET_KEY = os.getenv('SECRET_KEY')
