@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime, timezone
 from typing import Annotated
 from uuid import UUID, uuid4
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from passlib.context import CryptContext
 import jwt
 from jwt import PyJWTError
@@ -12,6 +12,9 @@ from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from ..exceptions import AuthenticationError
 import logging
 import os
+from ..database.core import get_db
+
+
 
 SECRET_KEY = os.getenv('SECRET_KEY')
 ALGORITHM = os.getenv('ALGORITHM')
@@ -63,21 +66,49 @@ def verify_token(token: str) -> schemas.TokenData:
 
 """" Fetch Current User using access token"""
 
-def register_user(db: Session, register_user_request: schemas.RegisterUserRequest) -> None:
+
+def register_user(db, register_user_request: schemas.RegisterUserRequest):
     try:
-        create_user_model = User(
-            id = uuid4(),
+        # 1️⃣ Check if user already exists
+        existing_user = db.query(User).filter(User.email == register_user_request.email).first()
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+
+        # 2️⃣ Create new user
+        hashed_password = get_password_hash(register_user_request.password)
+        new_user = User(
+            id=uuid4(),
             email=register_user_request.email,
             first_name=register_user_request.first_name,
             last_name=register_user_request.last_name,
-            get_password_hash=get_password_hash(register_user_request.password)
+            password_hash=hashed_password
         )
-        db.add(create_user_model)
+
+        db.add(new_user)
         db.commit()
+        db.refresh(new_user)
 
+        logging.info(f"✅ User {new_user.email} registered successfully.")
+        return new_user  # Returning model (works fine if response_model handles it)
+
+    except IntegrityError as e:
+        db.rollback()
+        logging.error(f"IntegrityError: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already exists."
+        )
     except Exception as e:
-        logging.error("Something went wrong")
-
+        db.rollback()
+        logging.error(f"Unexpected error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Something went wrong while creating the user."
+        )
+    
 
 def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]) -> schemas.TokenData:
     return verify_token(token)
@@ -87,7 +118,7 @@ CurrentUser = Annotated[schemas.TokenData, Depends(get_current_user)]
 
 """ Login User using access token schemas"""
 
-def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Session) -> schemas.Token:
+def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise AuthenticationError()

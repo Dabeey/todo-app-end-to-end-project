@@ -6,16 +6,18 @@ from ..database.core import DbSession
 from ..rate_limiter import limiter
 from . import schemas
 from . import service
+from ..users.schemas import UserResponse
 
 router = APIRouter(
     prefix='/auth',
     tags=['Auth']
 )
 
-@router.post('/', status_code=status.HTTP_201_CREATED)
+
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=UserResponse)
 @limiter.limit('5/hour')
 async def register_user(request: Request, register_user_request: schemas.RegisterUserRequest, db: DbSession):   
-    service.register_user(db, register_user_request)
+    return service.register_user(db, register_user_request)
 
 
 @router.post('/token', response_model=schemas.Token)
