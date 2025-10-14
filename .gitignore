@@ -1,1 +1,49 @@
-.env
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# Virtual Environments
+venv/
+.env/
+clean-venv/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info
+.eggs/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Pytest
+.pytest_cache/
+
+# Mypy
+.mypy_cache/
+
+# Pycharm / IDE
+.idea/
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# SQLite / DB files
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
