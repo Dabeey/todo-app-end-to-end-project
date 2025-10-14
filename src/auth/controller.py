@@ -7,6 +7,7 @@ from . import schemas
 from . import service
 from ..users.schemas import UserResponse
 
+
 router = APIRouter(
     prefix='/auth',
     tags=['Auth']
@@ -20,5 +21,5 @@ async def register_user(request: Request, register_user_request: schemas.Registe
 
 
 @router.post('/token', response_model=schemas.Token)
-async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db=DbSession):
+async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession):
     return service.login_for_access_token(form_data, db)

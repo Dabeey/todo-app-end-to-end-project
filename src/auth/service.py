@@ -110,10 +110,19 @@ def register_user(db, register_user_request: schemas.RegisterUserRequest):
         )
     
 
-def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]) -> schemas.TokenData:
-    return verify_token(token)
+def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: Annotated[Session, Depends(get_db)]) -> User:
+    token_data = verify_token(token)
+    user_id = token_data.get_uuid()
+    if user_id is None:
+        raise AuthenticationError("Invalid token data")
+    
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None:
+        raise AuthenticationError("User not found")
+    
+    return user
 
-CurrentUser = Annotated[schemas.TokenData, Depends(get_current_user)]
+CurrentUser = Annotated[User, Depends(get_current_user)]
 
 
 """ Login User using access token schemas"""

@@ -18,7 +18,10 @@ def get_user_by_id(db: Session, user_id: UUID) -> schemas.UserResponse:
 
 def change_password(db: Session, user_id: UUID, password_change: schemas.PasswordChange) -> None:
     try:
-        user = get_user_by_id(db, user_id)
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            logging.warning(f'User not found with id: {user_id}')
+            raise UserNotFoundError(user_id)
 
         # verify current password
         if not verify_password(password_change.current_password, user.password_hash):
