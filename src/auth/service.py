@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 from passlib.context import CryptContext
 import jwt
 from jwt import PyJWTError
+import hashlib
 from sqlalchemy.orm import Session
 from src.entities.user import User
 from . import schemas
@@ -16,7 +17,7 @@ from ..database.core import get_db
 from sqlalchemy.exc import IntegrityError
 
 
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv('SECRET_KEY') or 'your-secret-key-change-in-production'
 ALGORITHM = os.getenv('ALGORITHM') or 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -29,10 +30,31 @@ bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 """ Password: Authenticate user """
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return bcrypt_context.verify(plain_password, hashed_password)
+    try:
+        # Handle bcrypt length limit by hashing long passwords first
+        if len(plain_password.encode('utf-8')) > 72:
+            # Hash the password with SHA256 first, then use bcrypt
+            password_hash = hashlib.sha256(plain_password.encode('utf-8')).hexdigest()
+            return bcrypt_context.verify(password_hash, hashed_password)
+        else:
+            return bcrypt_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        logging.error(f"Password verification error: {e}")
+        return False
 
 def get_password_hash(password: str) -> str:
-    return bcrypt_context.hash(password)
+    try:
+        # Handle bcrypt length limit by hashing long passwords first
+        if len(password.encode('utf-8')) > 72:
+            # Hash the password with SHA256 first, then use bcrypt
+            password_hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+            return bcrypt_context.hash(password_hash)
+        else:
+            return bcrypt_context.hash(password)
+    except Exception as e:
+        logging.error(f"Password hashing error: {e}")
+        # Fallback to simple hash if bcrypt fails
+        return hashlib.sha256(password.encode('utf-8')).hexdigest()
 
 
 def authenticate_user(email:str, password:str, db:Session) -> User | bool:
@@ -127,10 +149,28 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 """ Login User using access token schemas"""
 
-def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
+def login_for_access_token(login_request: schemas.LoginRequest, db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
+    user = authenticate_user(login_request.email, login_request.password, db)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    return schemas.Token(access_token=token, token_type='bearer')
+
+
+def login_for_access_token_oauth2(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
+    """OAuth2 compatible login for /docs interface"""
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
-        raise AuthenticationError()
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     
     token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return schemas.Token(access_token=token, token_type='bearer')

@@ -23,7 +23,7 @@ def test_auth_flow():
     }
     
     login_data = {
-        "username": "test@example.com",  # OAuth2PasswordRequestForm uses 'username' field
+        "email": "test@example.com",
         "password": "testpassword123"
     }
     
@@ -43,7 +43,7 @@ def test_auth_flow():
             
         # Step 2: Login user
         print("\n2️⃣ Logging in user...")
-        login_response = requests.post(f"{BASE_URL}/auth/token", data=login_data)
+        login_response = requests.post(f"{BASE_URL}/auth/login", json=login_data)
         print(f"   Status: {login_response.status_code}")
         if login_response.status_code == 200:
             print("   ✅ Login successful")
