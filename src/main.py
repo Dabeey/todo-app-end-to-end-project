@@ -7,6 +7,8 @@ from .entities.todo import Todo  # Import models to register them
 from .entities.user import User
 from .api import register_routes
 from .logger_config import configure_logging, LogLevels
+from fastapi.openapi.utils import get_openapi
+
 
 configure_logging(LogLevels.INFO)
 
@@ -14,10 +16,7 @@ app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-"""
-Only uncomment below to create new tables when a database is available.
-Leaving this enabled without a DB connection will crash startup.
-"""
+
 try:
     Base.metadata.create_all(bind=engine)
 except Exception:
@@ -25,3 +24,33 @@ except Exception:
     pass
 
 register_routes(app)
+
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    
+    openapi_schema = get_openapi(
+        title="Modern Todo App",
+        version="1.0.0",
+        description="An Ultra modern Productivity App built with FastAPI, PostgreSQL, and React.",
+        routes=app.routes,
+    )
+    
+    # Add security scheme
+    openapi_schema["components"]["securitySchemes"] = {
+        "Bearer": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+    
+    # Add global security
+    openapi_schema["security"] = [{"Bearer": []}]
+    
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
+

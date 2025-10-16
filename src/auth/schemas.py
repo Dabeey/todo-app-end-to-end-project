@@ -23,5 +23,8 @@ class TokenData(BaseModel):
 
     def get_uuid(self) -> UUID | None:
         if self.user_id:
-            return UUID(self.user_id)
+            try:
+                return UUID(self.user_id)
+            except ValueError:
+                return None
         return None

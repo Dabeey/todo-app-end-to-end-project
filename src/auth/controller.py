@@ -21,12 +21,14 @@ async def register_user(request: Request, register_user_request: schemas.Registe
 
 
 @router.post('/login', response_model=schemas.Token)
+@limiter.limit('5/minute')
 async def login(login_request: schemas.LoginRequest, db: DbSession):
     """Login with email and password - works well with /docs"""
-    return service.login_for_access_token(login_request, db)
+    return service.login_for_access_token(login_request.email, login_request.password, db)
 
 
 @router.post('/token', response_model=schemas.Token)
+@limiter.limit('5/minute')
 async def login_for_access_token(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: DbSession):
     """OAuth2 compatible login for external clients"""
-    return service.login_for_access_token_oauth2(form_data, db)
+    return service.login_for_access_token(form_data.username, form_data.password, db)

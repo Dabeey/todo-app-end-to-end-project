@@ -9,12 +9,13 @@ import hashlib
 from sqlalchemy.orm import Session
 from src.entities.user import User
 from . import schemas
-from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from ..exceptions import AuthenticationError
 import logging
 import os
 from ..database.core import get_db
 from sqlalchemy.exc import IntegrityError
+from fastapi.security import HTTPAuthorizationCredentials
 
 
 SECRET_KEY = os.getenv('SECRET_KEY') or 'your-secret-key-change-in-production'
@@ -22,7 +23,9 @@ ALGORITHM = os.getenv('ALGORITHM') or 'HS256'
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+# oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+# oauth2_bearer = HTTPBearer()
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl="auth/token")
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 
@@ -71,7 +74,7 @@ def create_access_token(email:str, user_id: UUID, expires_delta: timedelta) -> s
     encode = {
         'sub': email,
         'id': str(user_id),
-        'exp': datetime.now(timezone.utc) + expires_delta
+        'exp': datetime.utcnow() + expires_delta
     }
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -80,10 +83,12 @@ def verify_token(token: str) -> schemas.TokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         user_id: str = payload.get('id')
+        if not user_id:
+            raise AuthenticationError("Missing user ID in token")
         return schemas.TokenData(user_id=user_id)
-    except PyJWTError as e:
+    except jwt.JWTError as e:
         logging.warning(f'Token verification failed: {str(e)}')
-        raise AuthenticationError()
+        raise AuthenticationError("Invalid token")
     
 
 """" Fetch Current User using access token"""
@@ -132,11 +137,35 @@ def register_user(db, register_user_request: schemas.RegisterUserRequest):
         )
     
 
+# def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: Annotated[Session, Depends(get_db)]) -> User:
+#     token_data = verify_token(token)
+#     user_id = token_data.get_uuid()
+#     if user_id is None:
+#         raise AuthenticationError("Invalid token data")
+    
+#     user = db.query(User).filter(User.id == user_id).first()
+#     if user is None:
+#         raise AuthenticationError("User not found")
+    
+#     return user
+
+# CurrentUser = Annotated[User, Depends(get_current_user)]
+
 def get_current_user(token: Annotated[str, Depends(oauth2_bearer)], db: Annotated[Session, Depends(get_db)]) -> User:
-    token_data = verify_token(token)
-    user_id = token_data.get_uuid()
+
+# def get_current_user(token: Annotated[HTTPAuthorizationCredentials, Depends(oauth2_bearer)],db: Annotated[Session, Depends(get_db)]) -> User:
+    # Extract actual token string from credentials object
+    token_data = verify_token(token.credentials)
+    user_id = token_data.user_id
+
     if user_id is None:
         raise AuthenticationError("Invalid token data")
+    
+    # Convert string UUID to UUID object
+    try:
+        user_uuid = UUID(user_id)
+    except ValueError:
+        raise AuthenticationError("Invalid user ID in token")
     
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
@@ -149,28 +178,42 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 
 """ Login User using access token schemas"""
 
-def login_for_access_token(login_request: schemas.LoginRequest, db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
-    user = authenticate_user(login_request.email, login_request.password, db)
+# def login_for_access_token(login_request: schemas.LoginRequest, db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
+#     user = authenticate_user(login_request.email, login_request.password, db)
+#     if not user:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Incorrect email or password",
+#             headers={"WWW-Authenticate": "Bearer"},
+#         )
+    
+#     token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+#     return schemas.Token(access_token=token, token_type='bearer')
+
+
+# def login_for_access_token_oauth2(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
+#     """OAuth2 compatible login for /docs interface"""
+#     user = authenticate_user(form_data.username, form_data.password, db)
+#     if not user:
+#         raise HTTPException(
+#             status_code=status.HTTP_401_UNAUTHORIZED,
+#             detail="Incorrect email or password",
+#             headers={"WWW-Authenticate": "Bearer"},
+#         )
+    
+#     token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+#     return schemas.Token(access_token=token, token_type='bearer')
+
+
+
+def login_for_access_token(email: str, password: str, db: Session) -> schemas.Token:
+    user = authenticate_user(email, password, db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
-    token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    return schemas.Token(access_token=token, token_type='bearer')
 
-
-def login_for_access_token_oauth2(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: Annotated[Session, Depends(get_db)]) -> schemas.Token:
-    """OAuth2 compatible login for /docs interface"""
-    user = authenticate_user(form_data.username, form_data.password, db)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    
     token = create_access_token(user.email, user.id, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     return schemas.Token(access_token=token, token_type='bearer')
