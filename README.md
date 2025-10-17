@@ -1,242 +1,88 @@
-🚀 TodoBackend API - FastAPI Backend
-A robust, production-ready Todo application backend built with FastAPI, featuring JWT authentication, rate limiting, and PostgreSQL integration.
+# Todo API - FastAPI Backend
 
-🛠 Tech Stack
-Framework: FastAPI + Python 3.11+
+A robust, high-performance RESTful API for a Todo application, built with FastAPI and PostgreSQL. This API provides a complete backend solution with full CRUD operations, user authentication, and secure data handling, ready for a frontend client to build upon.
 
-Database: PostgreSQL with SQLAlchemy ORM
+## 🚀 Features
 
-Authentication: JWT Tokens with HTTPBearer
+· Full CRUD Operations: Create, Read, Update, and Delete todos with ease
+· User Authentication & Authorization: JWT-based secure authentication system
+· PostgreSQL Database: Reliable and scalable data persistence
+· FastAPI Performance: Lightning-fast responses with automatic interactive documentation
+· Pydantic Validation: Strong data typing and validation
+· CORS Enabled: Ready for frontend integration
+· Environment Configuration: Secure management of sensitive data
+· Modern Python: Built with Python 3.7+ features and async capabilities
 
-Security: Password hashing with bcrypt
+## 🛠 Tech Stack
 
-Rate Limiting: SlowAPI for request throttling
+· Framework: FastAPI
+· Database: PostgreSQL
+· ORM: SQLAlchemy
+· Authentication: JWT (JSON Web Tokens)
+· Password Hashing: BCrypt
+· Deployment: Ready for deployment (Render, Heroku, etc.)
 
-Validation: Pydantic v2
+## 📚 API Endpoints
 
-Logging: Custom configurable logging system
+Method Endpoint Description Authentication
+POST /api/auth/register User registration No
+POST /api/auth/login User login No
+GET /api/todos Get all user's todos Yes
+POST /api/todos Create a new todo Yes
+GET /api/todos/{id} Get a specific todo Yes
+PUT /api/todos/{id} Update a todo Yes
+DELETE /api/todos/{id} Delete a todo Yes
 
-🚀 Quick Start
-Prerequisites
-Python 3.11+
+## 🔧 Installation & Setup
 
-PostgreSQL
+1. Clone the repository
+   ```bash
+   git clone https://github.com/Dabeey/todo-app-end-to-end-project.git
+   cd todo-app-end-to-end-project
+   ```
+2. Create a virtual environment
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   ```
+3. Install dependencies
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Environment Configuration
+   Create a .env file with:
+   ```
+   DATABASE_URL=your_postgresql_connection_string
+   SECRET_KEY=your_jwt_secret_key
+   ALGORITHM=HS256
+   ```
+5. Run the application
+   ```bash
+   uvicorn main:app --reload
+   ```
+6. Access API Documentation
+   Visit http://localhost:8000/docs for interactive Swagger documentation.
 
-pip
+## 🎯 Frontend Integration Ready
 
-Installation
-bash
-# Clone repository
-git clone https://github.com/YourFavoriteBackendGirl/todo-backend-api.git
-cd todo-backend-api
+This API is perfectly structured for frontend integration. Key features for frontend developers:
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# venv\Scripts\activate  # Windows
+· Clear, Consistent Endpoints: RESTful design patterns
+· Comprehensive Error Handling: Detailed error messages and status codes
+· JWT Authentication: Standard token-based auth flow
+· CORS Configured: Already set up for cross-origin requests
+· Interactive Documentation: Test endpoints directly at /docs
 
-# Install dependencies
-pip install -r requirements.txt
+## 🚀 Deployment
 
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your database credentials
-Environment Variables
-env
-DATABASE_URL=postgresql+psycopg2://user:password@localhost:5432/todo_db
-SECRET_KEY=your-super-secret-key-change-in-production
-ALGORITHM=HS256
-Run the Application
-bash
-# Start the server
-uvicorn main:app --reload
+The API is deployed and live at: [Your Live API URL Here]
 
-# Access API docs at: http://localhost:8000/docs
-📚 API Documentation
-Once running, access:
+Test endpoints using the interactive docs or tools like Postman.
 
-Swagger UI: /docs - Interactive API documentation
+## 🤝 Contributing
 
-ReDoc: /redoc - Alternative documentation
+Frontend developers interested in building a React, Vue, Angular, or any JavaScript frontend for this API are welcome to contribute! The API is stable, well-documented, and ready for integration.
 
-🔐 Authentication
-Register User
-http
-POST /auth/
-Content-Type: application/json
+## 📄 License
 
-{
-  "email": "user@example.com",
-  "first_name": "John",
-  "last_name": "Doe",
-  "password": "securepassword123"
-}
-Login
-http
-POST /auth/login
-Content-Type: application/json
-
-{
-  "email": "user@example.com",
-  "password": "securepassword123"
-}
-Response:
-
-json
-{
-  "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "token_type": "bearer"
-}
-Protected Endpoints
-Include the token in headers:
-
-http
-Authorization: Bearer your_jwt_token_here
-📝 API Endpoints
-Authentication
-Method	Endpoint	Description	Auth Required
-POST	/auth/	Register new user	❌
-POST	/auth/login	Login user	❌
-POST	/auth/token	OAuth2 compatible login	❌
-Users
-Method	Endpoint	Description	Auth Required
-GET	/users/me	Get current user	✅
-PUT	/users/change-password	Change password	✅
-Todos
-Method	Endpoint	Description	Auth Required
-GET	/todos/	Get all user todos	✅
-POST	/todos/	Create new todo	✅
-GET	/todos/{id}	Get specific todo	✅
-PUT	/todos/{id}	Update todo	✅
-PUT	/todos/{id}/complete	Mark todo complete	✅
-DELETE	/todos/{id}	Delete todo	✅
-🗄 Database Models
-User
-python
-id: UUID (Primary Key)
-email: String (Unique)
-first_name: String
-last_name: String
-password_hash: String
-Todo
-python
-id: UUID (Primary Key)
-user_id: UUID (Foreign Key)
-description: String
-due_date: DateTime (Optional)
-is_completed: Boolean
-created_at: DateTime
-completed_at: DateTime (Optional)
-priority: Enum (Normal, Low, Medium, High, Top)
-🛡 Security Features
-✅ JWT Authentication with bearer tokens
-
-✅ Password Hashing using bcrypt with SHA256 fallback
-
-✅ Rate Limiting (5 requests/minute for auth endpoints)
-
-✅ SQL Injection Protection via SQLAlchemy
-
-✅ CORS Enabled for frontend integration
-
-✅ Input Validation with Pydantic models
-
-🧪 Testing the API
-Using FastAPI Docs
-Visit http://localhost:8000/docs
-
-Register a new user via /auth/ endpoint
-
-Login via /auth/login to get JWT token
-
-Click "Authorize" button and enter: Bearer your_token_here
-
-Test protected endpoints
-
-Using curl
-bash
-# Register
-curl -X POST "http://localhost:8000/auth/" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","first_name":"Test","last_name":"User","password":"password123"}'
-
-# Login
-curl -X POST "http://localhost:8000/auth/login" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password123"}'
-
-# Get todos (with token)
-curl -X GET "http://localhost:8000/todos/" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-🔧 Development
-Project Structure
-text
-src/
-├── auth/
-│   ├── controller.py    # Auth routes
-│   ├── service.py       # Business logic
-│   └── schemas.py       # Pydantic models
-├── entities/
-│   ├── user.py          # User model
-│   └── todo.py          # Todo model
-├── todos/
-│   ├── controller.py    # Todo routes
-│   ├── service.py       # Todo logic
-│   └── schemas.py       # Todo schemas
-├── users/
-│   ├── controller.py    # User routes
-│   ├── service.py       # User logic
-│   └── schemas.py       # User schemas
-├── database/
-│   └── core.py          # DB configuration
-└── main.py              # App entry point
-Running Tests
-bash
-# Add tests and run (when implemented)
-pytest tests/
-🚀 Deployment
-Production Ready Features
-✅ Database connection pooling
-
-✅ Environment-based configuration
-
-✅ Comprehensive error handling
-
-✅ Structured logging
-
-✅ Rate limiting
-
-✅ Input validation
-
-Deploy to Production
-Set SECRET_KEY environment variable
-
-Configure production PostgreSQL database
-
-Set up reverse proxy (Nginx)
-
-Use process manager (PM2/Supervisor)
-
-Enable HTTPS
-
-🤝 Contributing
-This project is perfect for frontend developers looking to:
-
-Practice integrating with a real backend API
-
-Learn JWT authentication flows
-
-Build full-stack applications
-
-Improve backend understanding
-
-Frontend developers: Clone this and build your dream todo app frontend!
-
-📄 License
-MIT License - feel free to use this project for learning and development.
-
-👩‍💻 Author
-YourFavoriteBackendGirl - Building robust backends with ❤️
-
-🐛 Issues & Support
-Found a bug? Want to contribute? Open an issue or PR on GitHub!
+This project is licensed under the MIT License.
