@@ -1,6 +1,7 @@
 # Todo API - FastAPI Backend   
 
-A robust, high-performance RESTful API for a Todo application, built with FastAPI and PostgreSQL. This API provides a complete backend solution with full CRUD operations, user authentication, and secure data handling, ready for a frontend client to build upon.   
+A robust, high-performance RESTful API for a Todo application, built with FastAPI and PostgreSQL. 
+This API provides a complete backend solution with full CRUD operations, user authentication, and secure data handling, ready for a frontend client to build upon.   
 
 ## 🚀 Features
 
@@ -25,15 +26,15 @@ A robust, high-performance RESTful API for a Todo application, built with FastAP
 
 ## 📚 API Endpoints
 
-Method |   Endpoint         |  Description Authentication  
--------|--------------------|---------------------------------
-POST   |  api/auth/register |  User registration No    
-POST   |  api/auth/login    |  User login No    
-GET    |  api/todos         |  Get all user's todos Yes    
-POST   |  api/todos         |  Create a new todo Yes    
-GET    |  api/todos/{id}    |  Get a specific todo Yes    
-PUT    |  api/todos/{id}    |  Update a todo Yes    
-DELETE |  api/todos/{id}    |  Delete a todo Yes    
+Method |   Endpoint         |  Description         | Authentication  
+-------|--------------------|----------------------|-----------
+POST   |  api/auth/register |  User registration   | No    
+POST   |  api/auth/login    |  User login No       |
+GET    |  api/todos         |  Get all user's todos| Yes    
+POST   |  api/todos         |  Create a new todo   | Yes    
+GET    |  api/todos/{id}    |  Get a specific todo | Yes    
+PUT    |  api/todos/{id}    |  Update a todo       | Yes    
+DELETE |  api/todos/{id}    |  Delete a todo       | Yes    
 
 
 ## 🔧 Installation & Setup    
